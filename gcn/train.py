@@ -1,5 +1,5 @@
 
-'''整个项目使用了复杂的类特性，模型类和层类都有有继承的使用，特别绕，需要对类有充分的理解与掌握，头疼啊'''
+'''整个项目使用了复杂的类特性，模型类和层类都有有继承的使用''
 
 from __future__ import division
 from __future__ import print_function
