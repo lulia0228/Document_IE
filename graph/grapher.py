@@ -572,8 +572,9 @@ class Graph:
 	'''
 		This class generates a padded adjacency matrix and a feature matrix
 	'''
-	def __init__(self, max_nodes=50):
+	def __init__(self, max_nodes=50, resize=False):
 		self.max_nodes = max_nodes
+		self.resize = resize
 		return
 
 	# def make_graph(self, graph_dict):
@@ -683,7 +684,9 @@ class Graph:
 		return features
 
 	def _get_text_labels(self, data):
-		label_classes = ['buyer', 'date', 'no', 'amount', 'o', 'pad']
+		label_classes = ['buyer', 'date', 'no', 'amount', 'o']
+		if self.resize :
+			label_classes.append('virtual')
 		mlb = MultiLabelBinarizer(classes=label_classes)
 		la = mlb.fit_transform([[data]])
 
@@ -749,7 +752,7 @@ class Graph:
 
 		if self.max_nodes > label_arr.shape[0]:
 			target[:label_arr.shape[0], :label_arr.shape[1]] = label_arr
-			target[label_arr.shape[0]:, -1] = 1
+			target[label_arr.shape[0]:, -1] = 1 # 即one-hot label 最后一个标签位为1 代表是增加的虚拟节点
 
 		elif self.max_nodes < label_arr.shape[0]:
 			target = label_arr[:self.max_nodes, :label_arr.shape[1]]
@@ -781,25 +784,31 @@ class Graph:
 		adj_sparse = nx.adjacency_matrix(G)
 
 		# preprocess the sparse adjacency matrix returned by networkx function
-		A = np.array(adj_sparse.todense())
-		A = self._pad_adj(A)
-		# print(A.dtype) # int32
+		adj_arr = np.array(adj_sparse.todense())
+		# print(len(adj_arr), adj_arr)
+		if self.resize:
+			adj_arr = self._pad_adj(adj_arr)
+			# print(adj_arr.dtype) # int32
 
 		# preprocess the list of text entities
 		# 节点初始向量表示生成模块，每个节点维度要一致，即句子编码长度相同，
 		# 后期可以要改成句子的词典one-hot表达或者其他句子级别的词向量，统一长度，作为节点初始输入
 		feat_list = list(map(self._get_text_features, text_list))
 		feat_arr = np.array(feat_list)
-		X = self._pad_text_features(feat_arr)
-		# print(X.dtype) # float64
+		# print(len(feat_arr),feat_arr)
+		if self.resize:
+			feat_arr = self._pad_text_features(feat_arr)
+			# print(feat_arr.dtype) # float64
 
 		# preprocess the list of text labels
 		la_list = list(map(self._get_text_labels, label_list))
 		la_arr = np.array(la_list)
-		L = self._pad_text_labels(la_arr)
-		# print(L.dtype) #int32
+		# print(len(la_arr), la_arr)
+		if self.resize:
+			la_arr = self._pad_text_labels(la_arr)
+			# print(la_arr.dtype) #int32
 
-		return A, X, L
+		return adj_arr, feat_arr, la_arr
 
 if __name__ == "__main__":
 	print(os.getcwd())
@@ -821,7 +830,7 @@ if __name__ == "__main__":
 	print(label_list)
 	print('\n--------------------------------------------------------------\n')
 
-	graph = Graph()
+	graph = Graph(max_nodes=50, resize=False)
 	A, X, L = graph.make_graph_data(graph_dict, text_list, label_list)
 	np.save("./npy_data/a.npy", A)
 	np.save("./npy_data/x.npy", X)

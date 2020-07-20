@@ -9,7 +9,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 import jieba
 import sys
 sys.path.append('/Users/liheng/PycharmProjects/GCN_IE/graph/process_txt')
-# def seg_sentence(data, stopword_path, word_dict_path ):
+# def seg_sentence(data, stopword_path, word_dict_path):
 def seg_sentence(data):
     # stopword_path = "D:\\Program Files\\JetBrains\\PyCharm 2017.2.4\\Graph_Extract_1\\process_txt\\stop_words.txt"
     stopword_path = "/Users/liheng/PycharmProjects/GCN_IE/graph/process_txt/stop_words.txt"
@@ -30,6 +30,7 @@ def seg_sentence(data):
 
     return goal_data, speical_data
 
+
 # def _generate_txt_vec(data, vocab_file, stopword_path, word_dict):
 def _generate_txt_vec(data):
     # vocab_file = "D:\\Program Files\\JetBrains\\PyCharm 2017.2.4\\Graph_Extract_1\\data\\vocab.txt"
@@ -44,6 +45,7 @@ def _generate_txt_vec(data):
     m_y = _generate_m_y_vec(stop_data)
 
     return  np.hstack( (la[0],m_y) )
+
 
 def _generate_m_y_vec(data):
     month_l = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
