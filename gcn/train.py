@@ -1,6 +1,3 @@
-
-'''整个项目使用了复杂的类特性，模型类和层类都有有继承的使用'''
-
 from __future__ import division
 from __future__ import print_function
 
@@ -24,7 +21,7 @@ flags.DEFINE_string('model', 'gcn', 'Model string.')  # 'gcn', 'gcn_cheby', 'den
 flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
 flags.DEFINE_integer('epochs', 200, 'Number of epochs to train.')
 flags.DEFINE_integer('hidden1', 16, 'Number of units in hidden layer 1.')
-flags.DEFINE_float('dropout', 0.5, 'Dropout rate (1 - keep probability).')
+flags.DEFINE_float('dropout', 0.1, 'Dropout rate (1 - keep probability).')
 flags.DEFINE_float('weight_decay', 5e-4, 'Weight for L2 loss on embedding matrix.')
 flags.DEFINE_integer('early_stopping', 10, 'Tolerance for early stopping (# of epochs).')
 flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
@@ -32,21 +29,28 @@ flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
 # Load data
 adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask = load_data(FLAGS.dataset)
 
-# print(type(adj), adj.shape) # (2708, 2708)
-# print(type(features), features.shape) # (2708, 1433)
-# print(type(y_train), y_train.shape) #（2708,7）
-# print(type(y_val), y_val.shape) #（2708,7）
-# print(type(y_test), y_test.shape) #（2708,7）
-# print(type(train_mask), train_mask.shape) #（2708,）
-# print(type(val_mask), val_mask.shape) #（2708,）
-# print(type(test_mask), test_mask.shape) #（2708,）
+# print(type(adj), adj.shape) # <class 'scipy.sparse.csr.csr_matrix'>  (2708, 2708)
+# print(type(features), features.shape) # <class 'scipy.sparse.lil.lil_matrix'> (2708, 1433)
+# print(type(y_train), y_train.shape) # ndarray （2708,7）
+# print(type(y_val), y_val.shape) # ndarray（2708,7）
+# print(type(y_test), y_test.shape) # ndarray（2708,7）
+# print(type(train_mask), train_mask.shape) # ndarray（2708,）
+# print(type(val_mask), val_mask.shape) # ndarray（2708,）
+# print(type(test_mask), test_mask.shape) # ndarray（2708,）
 # for i,j in zip(y_train, train_mask):
 #     print(i, "\t", j)
+print(len(train_mask), sum(train_mask)) # 2708 140
+print(len(val_mask), sum(val_mask)) # 2708 500
+print(len(test_mask), sum(test_mask)) # 2708 1000
 
 
 # Some preprocessing
 features = preprocess_features(features)
-# print(features[2]) # (2708, 1433)
+# print(type(features)) # <class 'tuple'>
+# print(type(features[0]), features[0].shape)# <class 'numpy.ndarray'> (49216, 2)
+# print(type(features[1]),features[1].shape) # <class 'numpy.ndarray'> (49216,)
+# print(type(features[2]),features[2]) # (2708, 1433)
+
 
 if FLAGS.model == 'gcn':
     support = [preprocess_adj(adj)]
@@ -100,6 +104,7 @@ for epoch in range(FLAGS.epochs):
         t = time.time()
         # Construct feed dictionary
         feed_dict = construct_feed_dict(f, s, y_train, train_mask, placeholders)
+
         # feed_dict = construct_feed_dict(features, support, y_train, train_mask, placeholders)
         feed_dict.update({placeholders['dropout']: FLAGS.dropout})
 
