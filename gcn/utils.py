@@ -20,6 +20,29 @@ def sample_mask(idx, l):
     mask[idx] = 1
     return np.array(mask, dtype=np.bool)
 
+def weight_mask(labels):
+    label_classes = ['buyer', 'date', 'no', 'amount', 'o']
+    weight_dict = {'buyer':1.0, 'date':1.0, 'no':1.0, 'amount':1.0, 'o':0.3}
+    tmp_list = []
+    for arr in labels:
+        index = np.argmax(arr)
+        tmp_list.append(weight_dict[label_classes[index]])
+    return np.array(tmp_list)
+
+def load_single_graph(file_name):
+    '''
+    xxx_feature.npz => the feature vectors of the training instances as scipy.sparse.csr.csr_matrix object;
+    xxx_adj.npz => the graph adajacent connection of single training instances as scipy.sparse.csr.csr_matrix object;
+    xxx_lable.npy => the label vectors of single training instances as numpy.ndarray object;
+    :param file_name: sigle graph name
+    :return:
+    '''
+    features = sp.load_npz("./trail_data/"+file_name+"_feature.npz").tolil()
+    adj = sp.load_npz("./trail_data/"+file_name+"_adj.npz")
+    labels = np.load("./trail_data/"+file_name+"_label.npy")
+    weights_mask = weight_mask(labels)
+    return adj, features, labels, weights_mask
+
 
 def load_data(dataset_str):
     """
@@ -66,6 +89,7 @@ def load_data(dataset_str):
         ty = ty_extended
 
     features = sp.vstack((allx, tx)).tolil()
+    # print(")))))))))",type(sp.vstack((allx, tx)))) # <class 'scipy.sparse.csr.csr_matrix'>
     features[test_idx_reorder, :] = features[test_idx_range, :]
     adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
 
@@ -137,11 +161,12 @@ def preprocess_adj(adj):
     return sparse_to_tuple(adj_normalized)
 
 
-def construct_feed_dict(features, support, labels, labels_mask, placeholders):
+def construct_feed_dict(features, support, labels, weights_mask, placeholders):
     """Construct feed dictionary."""
     feed_dict = dict()
     feed_dict.update({placeholders['labels']: labels})
-    feed_dict.update({placeholders['labels_mask']: labels_mask})
+    # feed_dict.update({placeholders['labels_mask']: labels_mask})
+    feed_dict.update({placeholders['weights_mask']: weights_mask})
     feed_dict.update({placeholders['features']: features})
     feed_dict.update({placeholders['support'][i]: support[i] for i in range(len(support))})
     feed_dict.update({placeholders['num_features_nonzero']: features[1].shape})

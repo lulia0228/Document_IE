@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import os
+import scipy
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 from process_txt import code_sentence
@@ -782,6 +783,11 @@ class Graph:
 		'''
 		G = nx.from_dict_of_lists(graph_dict)
 		adj_sparse = nx.adjacency_matrix(G)
+		print("&&&&&&", type(adj_sparse))
+		scipy.sparse.save_npz("./sparse_adj.npz", adj_sparse)
+		# tmp = scipy.sparse.load_npz("./sparse_adj.npz")
+		# print(tmp)
+		# print("**************",type(adj_sparse)) # <class 'scipy.sparse.csr.csr_matrix'>
 
 		# preprocess the sparse adjacency matrix returned by networkx function
 		adj_arr = np.array(adj_sparse.todense())
@@ -836,6 +842,12 @@ if __name__ == "__main__":
 	np.save("./npy_data/x.npy", X)
 	np.save("./npy_data/l.npy", L)
 
+	feature_sparse = scipy.sparse.csr_matrix(X)
+	print(type(feature_sparse))
+	scipy.sparse.save_npz("./sparse_feature.npz", feature_sparse)
+	tmp = scipy.sparse.load_npz("./sparse_feature.npz")
+	print(tmp)
+	print('-----------------------------------------------------------------\n')
 	print(A.shape)
 	# print(A)
 	print('-----------------------------------------------------------------\n')

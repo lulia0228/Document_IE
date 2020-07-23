@@ -151,12 +151,15 @@ class GCN(Model):
             self.loss += FLAGS.weight_decay * tf.nn.l2_loss(var) # 包含渐退的L2损失
 
         # Cross entropy error
-        self.loss += masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
-                                                  self.placeholders['labels_mask']) # 加上有标签的交叉熵损失
+        # self.loss += masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
+        #                                           self.placeholders['labels_mask']) # 加上有标签的交叉熵损失
+        self.loss += weighted_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
+                                                  self.placeholders['weights_mask'])
 
     def _accuracy(self):
-        self.accuracy = masked_accuracy(self.outputs, self.placeholders['labels'],
-                                        self.placeholders['labels_mask']) # 计算有标签的平均精度
+        # self.accuracy = masked_accuracy(self.outputs, self.placeholders['labels'],
+        #                                 self.placeholders['labels_mask']) # 计算有标签的平均精度
+        self.accuracy = cal_accuracy(self.outputs, self.placeholders['labels'])
 
     def _build(self):
 
