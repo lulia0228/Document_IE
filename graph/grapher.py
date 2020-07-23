@@ -11,7 +11,6 @@ from process_txt import code_sentence
 import networkx as nx
 import re
 
-
 class ObjectTree:	
 	'''
 		Description:
