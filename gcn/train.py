@@ -101,9 +101,9 @@ cost_val = []
 
 # Train model
 for epoch in range(FLAGS.epochs):
-    # t = time.time()
-    for f,s in zip([features, features, features],[support, support, support]): # 这里设计的一次只能处理一个样本，所以想把已有的样本 按顺序过一遍模型 不知道效果是不是批次的效果
-        t = time.time()
+    t = time.time()
+    # next zip operation is for future batch train, it`s still need update.
+    for f,s in zip([features, features, features],[support, support, support]):
         # Construct feed dictionary
         # feed_dict = construct_feed_dict(f, s, y_train, train_mask, placeholders)
         feed_dict = construct_feed_dict(f, s, labels, weights_mask, placeholders)
