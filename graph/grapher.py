@@ -10,6 +10,7 @@ from process_txt import code_sentence
 # for making adjacency matrix
 import networkx as nx
 import re
+import random
 
 class ObjectTree:	
 	'''
@@ -508,6 +509,7 @@ class ObjectTree:
 			
 			# plot if image exists
 			else:
+				color_list = [(255,0,0),(255,128,0),(255,255,0),(0,255,0),(0,255,255),(0,0,255),(128,0,255)]
 				img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR) # add by me !
 				for idx, row in df_merged.iterrows():
 					# print(int(row['x_src_vert']),  type(row['y_src_vert']))
@@ -517,7 +519,7 @@ class ObjectTree:
 								# (int(row['x_src_vert']), int(row['ymax'])),
 								(int(row['x_dest_vert']), int(row['y_dest_vert'])),
 								# (int(row['x_dest_vert']), int(df_merged['ymin'][row['below_obj_index']])),
-								(0,0,255), 2)
+								 random.choice(color_list), 2)
 
 					if row['x_dest_hori'] != -1:
 						cv2.line(img,
@@ -525,7 +527,7 @@ class ObjectTree:
 								(int(row['xmax']), int(row['y_src_hori'])),
 								# (int(row['x_dest_hori']), int(row['y_dest_hori'])),
 								(int(df_merged['xmin'][row['side_obj_index']]), int(row['y_dest_hori'])),
-								(0,255,0), 2)
+								 random.choice(color_list), 2)
 
 				# write image in same folder
 				PLOT_PATH = \
@@ -782,8 +784,8 @@ class Graph:
 		'''
 		G = nx.from_dict_of_lists(graph_dict)
 		adj_sparse = nx.adjacency_matrix(G)
-		print("&&&&&&", type(adj_sparse))
-		scipy.sparse.save_npz("./sparse_adj.npz", adj_sparse)
+
+		# scipy.sparse.save_npz("./sparse_adj.npz", adj_sparse)
 		# tmp = scipy.sparse.load_npz("./sparse_adj.npz")
 		# print(tmp)
 		# print("**************",type(adj_sparse)) # <class 'scipy.sparse.csr.csr_matrix'>
@@ -813,45 +815,38 @@ class Graph:
 			la_arr = self._pad_text_labels(la_arr)
 			# print(la_arr.dtype) #int32
 
-		return adj_arr, feat_arr, la_arr
+		return adj_sparse, scipy.sparse.csr_matrix(feat_arr), la_arr
+
 
 if __name__ == "__main__":
 	print(os.getcwd())
-	map_file = './data/object_map.csv'
-	img_file = './data/object_map.jpg'
-	file_name = os.path.basename(map_file)[:-4]
+	csv_dir = "./data/csv_data"
+	img_dir = "./data/cvat_pngs"
+	matrix_dir = "./data/matrix_data"
+	for file in os.listdir(csv_dir):
+		csv_file = os.path.join(csv_dir, file)
+		img_file = os.path.join(img_dir, file[:-4]+".png")
+		file_prefix = os.path.basename(csv_file)[:-4]
+		df = pd.read_csv(csv_file)
+		img = cv2.imread(img_file, 0)
+		tree = ObjectTree()
+		tree.read(df, img, file_prefix)
+		graph_dict, text_list, label_list = tree.connect(plot=True, export_df=True)
 
-	df = pd.read_csv(map_file)
-	img = cv2.imread(img_file, 0)
-	
-	tree = ObjectTree()
-	# tree.read(df, img)
-	tree.read(df, img, file_name)
+		print(graph_dict)
+		print(text_list)
+		print(label_list)
+		print('\n--------------------------------------------------------------\n')
 
-	graph_dict, text_list, label_list = tree.connect(plot=True, export_df=True)
-	
-	print(graph_dict)
-	print(text_list)
-	print(label_list)
-	print('\n--------------------------------------------------------------\n')
+		graph = Graph(max_nodes=50, resize=False)
+		A, X, L = graph.make_graph_data(graph_dict, text_list, label_list)
+		scipy.sparse.save_npz(os.path.join(matrix_dir, file[:-4]+"_adj.npz"), A)
+		scipy.sparse.save_npz(os.path.join(matrix_dir, file[:-4]+"_feature.npz"), X)
+		np.save(os.path.join(matrix_dir, file[:-4]+"_label.npy"), L)
 
-	graph = Graph(max_nodes=50, resize=False)
-	A, X, L = graph.make_graph_data(graph_dict, text_list, label_list)
-	np.save("./npy_data/a.npy", A)
-	np.save("./npy_data/x.npy", X)
-	np.save("./npy_data/l.npy", L)
-
-	feature_sparse = scipy.sparse.csr_matrix(X)
-	print(type(feature_sparse))
-	scipy.sparse.save_npz("./sparse_feature.npz", feature_sparse)
-	tmp = scipy.sparse.load_npz("./sparse_feature.npz")
-	print(tmp)
-	print('-----------------------------------------------------------------\n')
-	print(A.shape)
-	# print(A)
-	print('-----------------------------------------------------------------\n')
-	print(X.shape)
-	# print(X)
-	print('-----------------------------------------------------------------\n')
-	print(L.shape)
-	# print(L)
+		print(A.A.shape)
+		# print(A)
+		print(X.A.shape)
+		# print(X)
+		print(L.shape)
+		# print(L)
