@@ -19,8 +19,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cora', 'Dataset string.')  # 'cora', 'citeseer', 'pubmed'
 flags.DEFINE_string('model', 'gcn', 'Model string.')  # 'gcn', 'gcn_cheby', 'dense'
 flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
-flags.DEFINE_integer('epochs', 100, 'Number of epochs to train.')
-flags.DEFINE_integer('hidden1', 16, 'Number of units in hidden layer 1.')
+flags.DEFINE_integer('epochs', 200, 'Number of epochs to train.')
+flags.DEFINE_integer('hidden1', 64, 'Number of units in hidden layer 1.')
 flags.DEFINE_float('dropout', 0.1, 'Dropout rate (1 - keep probability).')
 flags.DEFINE_float('weight_decay', 5e-4, 'Weight for L2 loss on embedding matrix.')
 flags.DEFINE_integer('early_stopping', 10, 'Tolerance for early stopping (# of epochs).')
@@ -28,7 +28,7 @@ flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
 
 # Load data
 # adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask = load_data(FLAGS.dataset)
-adj, features, labels, weights_mask  = load_single_graph("sparse")
+# adj, features, labels, weights_mask  = load_single_graph("sparse")
 
 # print(type(adj), adj.shape) # <class 'scipy.sparse.csr.csr_matrix'>  (2708, 2708)
 # print(type(features), features.shape) # <class 'scipy.sparse.lil.lil_matrix'> (2708, 1433)
@@ -46,34 +46,36 @@ adj, features, labels, weights_mask  = load_single_graph("sparse")
 
 
 # Some preprocessing
-features = preprocess_features(features)
+# features = preprocess_features(features)
 # print(type(features)) # <class 'tuple'>
 # print(type(features[0]), features[0].shape)# <class 'numpy.ndarray'> (49216, 2)
 # print(type(features[1]),features[1].shape) # <class 'numpy.ndarray'> (49216,)
 # print(type(features[2]),features[2]) # (2708, 1433)
 
 
-if FLAGS.model == 'gcn':
-    support = [preprocess_adj(adj)]
-    num_supports = 1
-    model_func = GCN
-elif FLAGS.model == 'gcn_cheby':
-    support = chebyshev_polynomials(adj, FLAGS.max_degree)
-    num_supports = 1 + FLAGS.max_degree
-    model_func = GCN
-elif FLAGS.model == 'dense':
-    support = [preprocess_adj(adj)]  # Not used
-    num_supports = 1
-    model_func = MLP
-else:
-    raise ValueError('Invalid argument for model: ' + str(FLAGS.model))
+# if FLAGS.model == 'gcn':
+#     support = [preprocess_adj(adj)]
+#     num_supports = 1
+#     model_func = GCN
+# elif FLAGS.model == 'gcn_cheby':
+#     support = chebyshev_polynomials(adj, FLAGS.max_degree)
+#     num_supports = 1 + FLAGS.max_degree
+#     model_func = GCN
+# elif FLAGS.model == 'dense':
+#     support = [preprocess_adj(adj)]  # Not used
+#     num_supports = 1
+#     model_func = MLP
+# else:
+#     raise ValueError('Invalid argument for model: ' + str(FLAGS.model))
 
 
 # Define placeholders
 placeholders = {
-    'support': [tf.sparse_placeholder(tf.float32) for _ in range(num_supports)],
-    'features': tf.sparse_placeholder(tf.float32, shape=tf.constant(features[2], dtype=tf.int64)),
-    'labels': tf.placeholder(tf.float32, shape=(None, labels.shape[1])),
+    'support': [tf.sparse_placeholder(tf.float32) for _ in range(1)],
+    # 'features': tf.sparse_placeholder(tf.float32, shape=tf.constant(features[2], dtype=tf.int64)),
+    'features': tf.sparse_placeholder(tf.float32, shape=(None,349)),
+    # 'labels': tf.placeholder(tf.float32, shape=(None, labels.shape[1])),
+    'labels': tf.placeholder(tf.float32, shape=(None, 10)),
     # 'labels_mask': tf.placeholder(tf.int32),
     'weights_mask': tf.placeholder(tf.float32),
     'dropout': tf.placeholder_with_default(0., shape=()),
@@ -81,7 +83,8 @@ placeholders = {
 }
 
 # Create model
-model = model_func(placeholders, input_dim=features[2][1], logging=True) # features[2][1]=1433
+# model = model_func(placeholders, input_dim=features[2][1], logging=True) # features[2][1]=1433
+model = GCN(placeholders, input_dim=349, logging=True) # features[2][1]=1433
 
 # Initialize session
 sess = tf.Session()
@@ -103,7 +106,14 @@ cost_val = []
 for epoch in range(FLAGS.epochs):
     t = time.time()
     # next zip operation is for future batch train, it`s still need update.
-    for f,s in zip([features, features, features],[support, support, support]):
+    # for f,s in zip([features, features, features],[support, support, support]):
+    for file_name in ['fp_0316_0185', 'fp_0316_1551', 'sample_origin']:
+    # for file_name in ['sparse']:
+        # adj, features, labels, weights_mask
+        adj,f,labels,weights_mask = load_single_graph(file_name)
+        f = preprocess_features(f)
+        s = [preprocess_adj(adj)]
+
         # Construct feed dictionary
         # feed_dict = construct_feed_dict(f, s, y_train, train_mask, placeholders)
         feed_dict = construct_feed_dict(f, s, labels, weights_mask, placeholders)
@@ -138,10 +148,19 @@ print("Optimization Finished!")
 #       "accuracy=", "{:.5f}".format(test_acc), "time=", "{:.5f}".format(test_duration))
 
 model.load(sess)
+adj, features, labels, weights_mask  = load_single_graph("sample_origin")
+# adj, features, labels, weights_mask  = load_single_graph("fp_0316_1551")
+# adj, features, labels, weights_mask  = load_single_graph("fp_0316_0185")
+features = preprocess_features(features)
+support = [preprocess_adj(adj)]
 new_feed_dict = construct_feed_dict(features, support, labels, weights_mask, placeholders)
 res = sess.run(model.soft_outs, feed_dict=new_feed_dict)
 print(len(res))
-label_cs = ['buyer', 'date', 'no', 'amount', 'o']
+loss, acc = sess.run([model.loss, model.accuracy], feed_dict=new_feed_dict)
+print("loss: ",loss, "acc: ", acc)
+# label_cs = ['buyer', 'date', 'no', 'amount', 'o']
+label_cs = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
+						 'payment_terms','amount_currency', 'currency', 'amount', 'o']
 p_label = [label_cs[i] for i in res]
 r_label = [label_cs[np.argmax(i)] for i in labels]
 # print("predict: " ,p_label)

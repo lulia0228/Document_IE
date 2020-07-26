@@ -8,12 +8,15 @@ import pickle
 import pandas as pd
 import numpy as np
 import re
+import os
 
 # 路径
-data_path = "../data/object_map.csv"
+# data_path = "../data/object_map.csv"
+csv_dir = "D:\\Program Files\\JetBrains\\PyCharm 2017.2.4\\Item_set\\GCN_IE\\graph\\data\\csv_data"
 # 读取数据
-data = pd.read_csv(data_path)
-print(data.head())
+data = pd.concat([pd.read_csv(os.path.join(csv_dir,file )) for file in os.listdir(csv_dir)])
+# print(len(data), data.head(),type(data))
+# print(data.head())
 
 ## 分词、建立词到id的映射表
 import jieba

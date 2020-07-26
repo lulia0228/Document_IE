@@ -9,11 +9,11 @@ xmin,ymin,xmax,ymax,Object,label
 1449,206,1550,226,Invoice #,o
 583,228,820,248,830-935-4048 FAX,o
 260,268,547,285,SPECIALIZING IN SOLUTIONS,o
-1255,270,1367,291,9/13/2019,date
-1464,270,1534,291,12379,no
+1255,270,1367,291,9/13/2019,document_date
+1464,270,1534,291,12379,invoice_no
 183,382,253,402,Bill To,o
 944,381,1031,406,Ship To,o
-157,433,333,457,Appleton Group,buyer
+157,433,333,457,Appleton Group,buyer_name
 920,433,1096,458,Appleton Group,o
 158,461,417,486,Attn: Accounts Payable,o
 920,460,1245,481,13639 Aldine Westfield Road,o

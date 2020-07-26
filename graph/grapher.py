@@ -686,7 +686,8 @@ class Graph:
 		return features
 
 	def _get_text_labels(self, data):
-		label_classes = ['buyer', 'date', 'no', 'amount', 'o']
+		label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
+						 'payment_terms','amount_currency', 'currency', 'amount', 'o']
 		if self.resize :
 			label_classes.append('virtual')
 		mlb = MultiLabelBinarizer(classes=label_classes)

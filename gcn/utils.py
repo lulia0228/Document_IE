@@ -21,8 +21,16 @@ def sample_mask(idx, l):
     return np.array(mask, dtype=np.bool)
 
 def weight_mask(labels):
-    label_classes = ['buyer', 'date', 'no', 'amount', 'o']
-    weight_dict = {'buyer':1.0, 'date':1.0, 'no':1.0, 'amount':1.0, 'o':0.3}
+    # label_classes = ['buyer', 'date', 'no', 'amount', 'o']
+    label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
+						 'payment_terms','amount_currency', 'currency', 'amount', 'o']
+    # weight_dict = {'buyer':1.0, 'date':1.0, 'no':1.0, 'amount':1.0, 'o':0.3}
+    weight_dict = {}
+    for k in label_classes:
+        if k == 'o':
+            weight_dict[k] = 0.3
+        else:
+            weight_dict[k] = 1.0
     tmp_list = []
     for arr in labels:
         index = np.argmax(arr)
@@ -37,9 +45,12 @@ def load_single_graph(file_name):
     :param file_name: sigle graph name
     :return:
     '''
-    features = sp.load_npz("./trail_data/"+file_name+"_feature.npz").tolil()
-    adj = sp.load_npz("./trail_data/"+file_name+"_adj.npz")
-    labels = np.load("./trail_data/"+file_name+"_label.npy")
+    # features = sp.load_npz("./trail_data/"+file_name+"_feature.npz").tolil()
+    features = sp.load_npz("./matrix_data/"+file_name+"_feature.npz").tolil()
+    # adj = sp.load_npz("./trail_data/"+file_name+"_adj.npz")
+    adj = sp.load_npz("./matrix_data/"+file_name+"_adj.npz")
+    # labels = np.load("./trail_data/"+file_name+"_label.npy")
+    labels = np.load("./matrix_data/"+file_name+"_label.npy")
     weights_mask = weight_mask(labels)
     return adj, features, labels, weights_mask
 
@@ -168,6 +179,7 @@ def construct_feed_dict(features, support, labels, weights_mask, placeholders):
     # feed_dict.update({placeholders['labels_mask']: labels_mask})
     feed_dict.update({placeholders['weights_mask']: weights_mask})
     feed_dict.update({placeholders['features']: features})
+    # feed_dict.update({placeholders['support'][i]: support[i] for i in range(len(support))})
     feed_dict.update({placeholders['support'][i]: support[i] for i in range(len(support))})
     feed_dict.update({placeholders['num_features_nonzero']: features[1].shape})
     return feed_dict
