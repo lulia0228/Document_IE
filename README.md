@@ -21,7 +21,7 @@ Unfortunately, my net structure only supports 1 batch training now and I will ad
 # Result 
 The train data contains 626 scanned receipts with some labeling errors and the test data contains 347 scanned receipts. 
 
-It takes about 20 seconds for training a epoch on one GTX1080 GPU.     
+It takes about 20 seconds for training a epoch on one GTX1080 GPU and occupies only 900MB memory.     
 
 My box level prediction on SROIE infomation extract task3 is as follows:    
 
@@ -35,3 +35,5 @@ My box level prediction on SROIE infomation extract task3 is as follows:
                ————————————|————————————|——————————|——————————
                TOTAL       |  0.78      |   0.76   |   0.77    
       
+# Better relation work 
+I have tried Pick model in paper:
