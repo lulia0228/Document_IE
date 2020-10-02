@@ -9,7 +9,7 @@ For quickly verify GCN's powerful ability of adjoining neighbours, I use lstm to
 
 Indeed, we can change the structure to predict entity directly like the traditional NER task.        
 
-Before training, we need to use grapher.py to trans a recipt into graph structure and obtain the adjacent matrix and span vector for gcn use.The fllowing picture shows:
+Before training, we need to use grapher.py to trans a recipt into graph structure and obtain the adjacent matrix and span vector for gcn use.The following picture shows:
 
 
 Unfortunately, my net structure only supports 1 batch training and in the future I will add real batch training when I have spare time.
@@ -17,9 +17,9 @@ Unfortunately, my net structure only supports 1 batch training and in the future
 # Result 
 The train data contains 626 scanned recipts with some labeling errors and the test data contains 347 scanned recipts. 
 
-It takes about 20 seconds for one epoch traing on one GTX1080 GPU.     
+It takes about 20 seconds for training a epoch on one GTX1080 GPU.     
 
-My box level prediction on sroie infomation extract task3 is as fllows:    
+My box level prediction on sroie infomation extract task3 is as follows:    
 
                            |  precision |  recall  | f1-score   
                ————————————|————————————|——————————|——————————
