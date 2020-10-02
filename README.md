@@ -11,7 +11,7 @@ Indeed, we can change the structure to predict entity directly like the traditio
 # Result 
 The train data contains 626 scanned recipts with some labeling errors and the test data contains 347 scanned recipts. 
 
-The model costs about 20 seconds training one epoch on a GTX1080 Gpu.    
+The model costs about 20 seconds training a epoch on one GTX1080 GPu.    
 
 My box level prediction on sroie infomation extract task3 is as fllows:    
 
