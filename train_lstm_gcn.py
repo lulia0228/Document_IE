@@ -82,10 +82,10 @@ for file in os.listdir(img_dir):
 for file in os.listdir(test_dir):
     test_list.append(args.test_data_dir+file[:-4])
     
-val_list = random.sample(file_list, 4)
+val_list = random.sample(file_list, 1)
 train_list = list(set(file_list)-set(val_list))
 print("train_data : ", len(train_list))
-print("test_data : ", len(val_list))
+print("test_data : ", len(test_list))
 
 # exit()
 
