@@ -9,7 +9,7 @@ For quickly verify GCN's powerful ability of adjoining neighbours, I use lstm to
 
 Indeed, we can change the structure to predict entity directly like the traditional NER task.        
 
-Before training, we need to use grapher.py to trans a recipt into graph structure and obtain the adjcant matrix and span vector for gcn use.The fllowing picture shows:
+Before training, we need to use grapher.py to trans a recipt into graph structure and obtain the adjacent matrix and span vector for gcn use.The fllowing picture shows:
 
 
 Unfortunately, my net structure only supports 1 batch training and in the future I will add real batch training when I have spare time.
