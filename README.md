@@ -36,7 +36,7 @@ My box level prediction on SROIE infomation extract task3 is as follows:
                TOTAL       |  0.78      |   0.76   |   0.77    
       
 # Better relation work 
-I have also tried ["Pick model"]  as described in paper: (arxiv.org/abs/2004.07464). The result performes better. It needs at least 10GB GPU memory and costs more time to train.    
+I have also tried "Pick model"  as described in [paper:] (arxiv.org/abs/2004.07464). The result performes better. It needs at least 10GB GPU memory and costs more time to train.    
 
 Another model is "LayoutLM" whick combining bert pretrained model trained and released by microsoft. It also occupies huge GPU memory and needs to train long time.   
 
