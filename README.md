@@ -12,7 +12,7 @@ Indeed, we can change the structure to predict entity directly like the traditio
 Before training, we need to use grapher.py to trans a recipt into graph structure and obtain the adjacent matrix and span vector for gcn use.The following picture shows:
 
 <div align="center">
-    <img src="https://github.com/lulia0228/Document_IE/blob/master/graph/grapher_outputs/graph_X51006401836.png" width="1000px">
+    <img src="https://github.com/lulia0228/Document_IE/blob/master/graph/grapher_outputs/graph_X51006401836.png" width="800px">
 </div>
 
 Unfortunately, my net structure only supports 1 batch training and in the future I will add real batch training when I have spare time.
