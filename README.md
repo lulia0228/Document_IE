@@ -7,7 +7,7 @@ The main refrence : https://github.com/tkipf/gcn.
 # Details
 For quickly verify GCN's powerful ability of adjoining neighbours, I use lstm to express a span sentence currently and gcn to predict span label for box level prediction on SROIE infomation extract task3.       
 
-Indeed, we can change the structure to predict entity directly like the traditional NER task.        
+Indeed, we can change the structure to predict entity directly just like the traditional NER task does.        
 
 Before training, we need to use grapher.py to trans a receipt into graph structure and obtain the adjacent matrix and span vector for gcn use. The following picture shows graph connections on a receipt.   
 
