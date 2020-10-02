@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2020/5/4 8:51
-# @Author  : Heng Li
-# @File    : generate_vocab.py
-# @Software: PyCharm
 
 import pickle
 import pandas as pd

@@ -1,9 +1,4 @@
 #--coding:utf-8--
-'''
-@Time   : 2020/3/9
-@Author : Heng Li
-@Email  : liheng@elensdata.com
-'''
 
 import os
 import json

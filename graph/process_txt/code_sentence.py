@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2020/5/4 8:53
-# @Author  : Heng Li
-# @File    : code_sentence.py
-# @Software: PyCharm
 
 import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer

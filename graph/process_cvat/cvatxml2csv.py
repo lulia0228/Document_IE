@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2020/8/30 17:14
-# @Author  : Heng Li
-# @File    : cvatXml2Csv.py
-# @Software: PyCharm
 
 import os
 import lxml

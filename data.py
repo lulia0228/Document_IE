@@ -25,14 +25,10 @@ def sample_mask(idx, l):
     return np.array(mask, dtype=np.bool)
 
 def weight_mask(labels):
-    label_classes = ['COMPANY', 'ADDRESS', 'DATE', 'TOTAL', 'O']
-
-    # label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
-		# 				 'payment_terms','amount_currency', 'currency', 'amount', 'o']
-    # weight_dict = {'buyer':1.0, 'date':1.0, 'no':1.0, 'amount':1.0, 'o':0.3}
+    label_classes = ['company', 'address', 'date', 'total', 'other']
     weight_dict = {}
     for k in label_classes:
-        if k == 'O':
+        if k == 'other':
             weight_dict[k] = 0.8
         else:
             weight_dict[k] = 1.0

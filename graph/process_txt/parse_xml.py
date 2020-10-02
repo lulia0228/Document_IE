@@ -1,9 +1,5 @@
 #--coding:utf-8--
-'''
-@Time   : 2020/7/24
-@Author : Heng Li
-@Email  : liheng@elensdata.com
-'''
+
 import os
 import lxml
 from lxml import etree

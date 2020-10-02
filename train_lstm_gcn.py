@@ -1,9 +1,5 @@
 #--coding:utf-8--
-'''
-@Time   : 2020/9/7
-@Author : Heng Li
-@Email  : liheng_lulia@163.com
-'''
+
 import  torch
 from    torch import nn
 from    torch import optim
