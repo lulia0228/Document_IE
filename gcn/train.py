@@ -148,9 +148,9 @@ print("Optimization Finished!")
 #       "accuracy=", "{:.5f}".format(test_acc), "time=", "{:.5f}".format(test_duration))
 
 model.load(sess)
-adj, features, labels, weights_mask  = load_single_graph("sample_origin")
+# adj, features, labels, weights_mask  = load_single_graph("sample_origin")
 # adj, features, labels, weights_mask  = load_single_graph("fp_0316_1551")
-# adj, features, labels, weights_mask  = load_single_graph("fp_0316_0185")
+adj, features, labels, weights_mask  = load_single_graph("fp_0316_0185")
 features = preprocess_features(features)
 support = [preprocess_adj(adj)]
 new_feed_dict = construct_feed_dict(features, support, labels, weights_mask, placeholders)
