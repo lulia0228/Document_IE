@@ -12,7 +12,7 @@ Indeed, we can change the structure to predict entity directly like the traditio
 Before training, we need to use grapher.py to trans a receipt into graph structure and obtain the adjacent matrix and span vector for gcn use. The following picture shows graph connections on a receipt.   
 
 <div align="center">
-    <img src="https://github.com/lulia0228/Document_IE/blob/master/graph/grapher_outputs/graph_X51006401836.png" width="500px">
+    <img src="https://github.com/lulia0228/Document_IE/blob/master/graph/grapher_outputs/graph_X51006401836.png" width="450px">
 </div>   
 
 
