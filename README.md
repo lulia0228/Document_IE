@@ -4,6 +4,9 @@ This repo use GCN to extract entities from semi-structured document.
 
 The main refrence : https://github.com/tkipf/gcn.   
 
-For quickly verify GCN's powerful ability of adjoining neighbours, I only use word bag to express a span sentence currently. Indeed, we can also deal a span sentence with lstm or transformer and use the final ouput to express it as the aftering GCN's input.     
+For quickly verify GCN's powerful ability of adjoining neighbours, I use lstm to express a span sentence currently and gcn to predict span label for box level prediction on sroie infomation extract task3.     
 
-I'm adding lstm/transformer+GCN method for box level predict on sroie infomation extract task3. I will upload it soon.
+Indeed, we can change the structure to predict entity directly like the traditional NER task.     
+
+My box level prediction on sroie infomation extract task3 is as fllows:
+
