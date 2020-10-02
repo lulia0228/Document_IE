@@ -12,7 +12,7 @@ Indeed, we can change the structure to predict entity directly like the traditio
 Before training, we need to use grapher.py to trans a recipt into graph structure and obtain the adjcant matrix and span vector for gcn use.The fllowing picture shows:
 
 
-Unfortunately, my net structure only supports 1 batch training and in the future I will add batch training when I have spare time.
+Unfortunately, my net structure only supports 1 batch training and in the future I will add real batch training when I have spare time.
 
 # Result 
 The train data contains 626 scanned recipts with some labeling errors and the test data contains 347 scanned recipts. 
