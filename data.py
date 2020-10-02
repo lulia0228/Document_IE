@@ -1,13 +1,15 @@
-import numpy as np
-import pickle as pkl
-import networkx as nx
-import scipy.sparse as sp
-from scipy.sparse.linalg.eigen.arpack import eigsh
-import sys
+import  numpy as np
+import  pickle as pkl
+import  networkx as nx
+import  scipy.sparse as sp
+from    scipy.sparse.linalg.eigen.arpack import eigsh
+import  sys
 
 
 def parse_index_file(filename):
-    """Parse index file."""
+    """
+    Parse index file.
+    """
     index = []
     for line in open(filename):
         index.append(int(line.strip()))
@@ -15,20 +17,23 @@ def parse_index_file(filename):
 
 
 def sample_mask(idx, l):
-    """Create mask."""
+    """
+    Create mask.
+    """
     mask = np.zeros(l)
     mask[idx] = 1
     return np.array(mask, dtype=np.bool)
 
 def weight_mask(labels):
-    # label_classes = ['buyer', 'date', 'no', 'amount', 'o']
-    label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
-						 'payment_terms','amount_currency', 'currency', 'amount', 'o']
+    label_classes = ['COMPANY', 'ADDRESS', 'DATE', 'TOTAL', 'O']
+
+    # label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
+		# 				 'payment_terms','amount_currency', 'currency', 'amount', 'o']
     # weight_dict = {'buyer':1.0, 'date':1.0, 'no':1.0, 'amount':1.0, 'o':0.3}
     weight_dict = {}
     for k in label_classes:
-        if k == 'o':
-            weight_dict[k] = 0.3
+        if k == 'O':
+            weight_dict[k] = 0.8
         else:
             weight_dict[k] = 1.0
     tmp_list = []
@@ -36,6 +41,16 @@ def weight_mask(labels):
         index = np.argmax(arr)
         tmp_list.append(weight_dict[label_classes[index]])
     return np.array(tmp_list)
+
+
+def load_single_graph4lstm_gcn(file_name):
+    adj = sp.load_npz(file_name+"_adj.npz")
+    features = np.load(file_name+"_feature.npy", allow_pickle=True)
+    labels = np.load(file_name+"_label.npy",allow_pickle=True)
+    weights_mask = weight_mask(labels)
+
+    return adj, features, labels, weights_mask
+
 
 def load_single_graph(file_name):
     '''
@@ -46,11 +61,15 @@ def load_single_graph(file_name):
     :return:
     '''
     # features = sp.load_npz("./trail_data/"+file_name+"_feature.npz").tolil()
-    features = sp.load_npz("./matrix_data/"+file_name+"_feature.npz").tolil()
+    # features = sp.load_npz("./matrix_data_sroie/"+file_name+"_feature.npz").tolil()
+    # features = sp.load_npz(file_name+"_feature.npz").tolil()
+    features = sp.load_npz(file_name+"_feature.npz")
     # adj = sp.load_npz("./trail_data/"+file_name+"_adj.npz")
-    adj = sp.load_npz("./matrix_data/"+file_name+"_adj.npz")
+    # adj = sp.load_npz("./matrix_data_sroie/"+file_name+"_adj.npz")
+    adj = sp.load_npz(file_name+"_adj.npz")
     # labels = np.load("./trail_data/"+file_name+"_label.npy")
-    labels = np.load("./matrix_data/"+file_name+"_label.npy")
+    # labels = np.load("./matrix_data_sroie/"+file_name+"_label.npy")
+    labels = np.load(file_name+"_label.npy")
     weights_mask = weight_mask(labels)
     return adj, features, labels, weights_mask
 
@@ -100,7 +119,6 @@ def load_data(dataset_str):
         ty = ty_extended
 
     features = sp.vstack((allx, tx)).tolil()
-    # print(")))))))))",type(sp.vstack((allx, tx)))) # <class 'scipy.sparse.csr.csr_matrix'>
     features[test_idx_reorder, :] = features[test_idx_range, :]
     adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
 
@@ -126,12 +144,14 @@ def load_data(dataset_str):
 
 
 def sparse_to_tuple(sparse_mx):
-    """Convert sparse matrix to tuple representation."""
+    """
+    Convert sparse matrix to tuple representation.
+    """
     def to_tuple(mx):
         if not sp.isspmatrix_coo(mx):
             mx = mx.tocoo()
         coords = np.vstack((mx.row, mx.col)).transpose()
-        values = mx.data # ndarray (49126,) 49126个非0值，上面是把索引存成了二维数组，coords的一行代表一个非0元素的行列索引
+        values = mx.data
         shape = mx.shape
         return coords, values, shape
 
@@ -145,25 +165,28 @@ def sparse_to_tuple(sparse_mx):
 
 
 def preprocess_features(features):
-    """Row-normalize feature matrix and convert to tuple representation"""
-    # print(features.shape) #(2708, 1433)
-    rowsum = np.array(features.sum(1))
-    r_inv = np.power(rowsum, -1).flatten() # # 行归一化
-    r_inv[np.isinf(r_inv)] = 0.
-    r_mat_inv = sp.diags(r_inv) #从对角线构造一个稀疏矩阵
-    features = r_mat_inv.dot(features)  #(2708, 2708)*(2708, 1433)
-    # print(type(features)) #scipy.sparse.csr.csr_matrix
-    return sparse_to_tuple(features)
+    """
+    Row-normalize feature matrix and convert to tuple representation
+    """
+    # # print("000000", type(features)) # scipy.sparse.lil.lil_matrix
+    # rowsum = np.array(features.sum(1)) # get sum of each row, [2708, 1]
+    # r_inv = np.power(rowsum, -1).flatten() # 1/rowsum, [2708]
+    # r_inv[np.isinf(r_inv)] = 0. # zero inf data
+    # r_mat_inv = sp.diags(r_inv) # sparse diagonal matrix, [2708, 2708]
+    # features = r_mat_inv.dot(features) # D^-1:[2708, 2708]@X:[2708, 2708]
+    # print("000000", type(features)) # scipy.sparse.csr.csr_matrix
+
+    return sparse_to_tuple(features) # [coordinates, data, shape], []
 
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
     adj = sp.coo_matrix(adj)
-    rowsum = np.array(adj.sum(1))
-    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    rowsum = np.array(adj.sum(1)) # D
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten() # D^-0.5
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt) # D^-0.5
+    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo() # D^-0.5AD^0.5
 
 
 def preprocess_adj(adj):
@@ -172,21 +195,10 @@ def preprocess_adj(adj):
     return sparse_to_tuple(adj_normalized)
 
 
-def construct_feed_dict(features, support, labels, weights_mask, placeholders):
-    """Construct feed dictionary."""
-    feed_dict = dict()
-    feed_dict.update({placeholders['labels']: labels})
-    # feed_dict.update({placeholders['labels_mask']: labels_mask})
-    feed_dict.update({placeholders['weights_mask']: weights_mask})
-    feed_dict.update({placeholders['features']: features})
-    # feed_dict.update({placeholders['support'][i]: support[i] for i in range(len(support))})
-    feed_dict.update({placeholders['support'][i]: support[i] for i in range(len(support))})
-    feed_dict.update({placeholders['num_features_nonzero']: features[1].shape})
-    return feed_dict
-
-
 def chebyshev_polynomials(adj, k):
-    """Calculate Chebyshev polynomials up to order k. Return a list of sparse matrices (tuple representation)."""
+    """
+    Calculate Chebyshev polynomials up to order k. Return a list of sparse matrices (tuple representation).
+    """
     print("Calculating Chebyshev polynomials up to order {}...".format(k))
 
     adj_normalized = normalize_adj(adj)

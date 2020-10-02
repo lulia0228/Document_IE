@@ -110,6 +110,7 @@ class ObjectTree:
 		df_plot = pd.DataFrame()
 		
 		# initialize empty lists to store coordinates and distances
+		# 存储的是每个文字块的垂直连接和水平连接的2个端点、距离、目标连接的id（没有连接的全部存储为-1）
 		# ================== vertical======================================== #
 		distances, nearest_dest_ids_vert = [], []
 		
@@ -230,7 +231,8 @@ class ObjectTree:
 
 							# consider only the cases where the destination object
 							# lies to the right of source
-							if dest_center_x > src_center_x:
+							# if dest_center_x > src_center_x:
+							if dest_center_x > src_center_x + (dest_row['xmax']-src_row['xmin'])/2:
 								#check if vertical range of dest lies within range of source
 								# 如果想考虑右上方、右下方（垂直无重叠）的连接，增加2个case即可，并设置阈值
 
@@ -364,7 +366,9 @@ class ObjectTree:
 				print(df['Object'][nearest_dest_ids_hori[-1]])
 			print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")'''
 
+		# print(len(nearest_dest_ids_vert))
 		# print(nearest_dest_ids_vert)
+		# print(len(nearest_dest_ids_hori))
 		# print(nearest_dest_ids_hori)
 
 		# ==================== vertical ===================================== #
@@ -497,8 +501,8 @@ class ObjectTree:
 				os.makedirs('grapher_outputs')	
 			
 			# subdirectory to store plots
-			if not os.path.exists('./grapher_outputs/plots'):
-				os.makedirs('./grapher_outputs/plots')
+			if not os.path.exists('./grapher_outputs/plots_604'):
+				os.makedirs('./grapher_outputs/plots_604')
 			
 			# check if image exists in folder
 			try: 
@@ -509,7 +513,9 @@ class ObjectTree:
 			
 			# plot if image exists
 			else:
-				color_list = [(255,0,0),(255,128,0),(255,255,0),(0,255,0),(0,255,255),(0,0,255),(128,0,255)]
+				# color_list = [(255,0,0),(255,128,0),(255,255,0),(0,255,0),(0,255,255),(0,0,255),(128,0,255)]
+				color_list1 = [(0,0,255)]
+				color_list2 = [(255,0,0)]
 				img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR) # add by me !
 				for idx, row in df_merged.iterrows():
 					# print(int(row['x_src_vert']),  type(row['y_src_vert']))
@@ -519,7 +525,7 @@ class ObjectTree:
 								# (int(row['x_src_vert']), int(row['ymax'])),
 								(int(row['x_dest_vert']), int(row['y_dest_vert'])),
 								# (int(row['x_dest_vert']), int(df_merged['ymin'][row['below_obj_index']])),
-								 random.choice(color_list), 2)
+								 random.choice(color_list1), 2)
 
 					if row['x_dest_hori'] != -1:
 						cv2.line(img,
@@ -527,11 +533,11 @@ class ObjectTree:
 								(int(row['xmax']), int(row['y_src_hori'])),
 								# (int(row['x_dest_hori']), int(row['y_dest_hori'])),
 								(int(df_merged['xmin'][row['side_obj_index']]), int(row['y_dest_hori'])),
-								 random.choice(color_list), 2)
+								 random.choice(color_list2), 2)
 
 				# write image in same folder
 				PLOT_PATH = \
-					'./grapher_outputs/plots/' + 'object_tree_' + str(self.file_name) + '.jpg'
+					'./grapher_outputs/plots_604/' + 'graph_' + str(self.file_name) + '.jpg'
 				cv2.imwrite(PLOT_PATH, img)
 
 
@@ -554,7 +560,9 @@ class ObjectTree:
 		# {src_id: dest_1, dest_2, ..}
 
 		graph_dict = {}
+		all_items = []
 		for src_id, row in df.iterrows():
+			all_items.append(src_id)
 			if row['below_obj_index'] != -1:
 				if src_id in graph_dict:
 					graph_dict[src_id].append(row['below_obj_index'])
@@ -567,287 +575,299 @@ class ObjectTree:
 				else:
 					graph_dict[src_id] = [row['side_obj_index']]
 
-		return graph_dict, df['Object'].tolist(),  df['label'].tolist()
+		# 特殊处理，找出没有进图的节点即文档中没有外部连接的孤立文字块
+		graph_items = []
+		for k,v in graph_dict.items():
+			graph_items.append(k)
+			for dst in v:
+				graph_items.append(dst)
+		alone_nodes = list(set(all_items)-set(graph_items))
+		content_lst = df['Object'].tolist()
+		label_lst = df['label'].tolist()
+		if alone_nodes != []:
+			content_lst = [content_lst[i] for i in range(len(content_lst)) if i not in alone_nodes]
+			label_lst = [label_lst[i] for i in range(len(label_lst)) if i not in alone_nodes]
+
+		# return graph_dict, df['Object'].tolist(),  df['label'].tolist(), alone_nodes
+		return graph_dict, content_lst,  label_lst, alone_nodes
 
 
 class Graph:
-	'''
-		This class generates a padded adjacency matrix and a feature matrix
-	'''
-	def __init__(self, max_nodes=50, resize=False):
-		self.max_nodes = max_nodes
-		self.resize = resize
-		return
 
-	# def make_graph(self, graph_dict):
-	# 	'''
-	# 		Function to make networkx graph
+	# This class generates a padded adjacency matrix and a feature matrix
 
-	# 		Args:
-	# 			graph_dict: dict of lists, 
-	# 						{src_id: [dest_id]}
+    def __init__(self, max_nodes=50, resize=False):
+        self.max_nodes = max_nodes
+        self.resize = resize
+        return
 
-				
-	# 		Returns:
-	# 			G: 
-	# 				Padded adjacency matrix of size (max_nodes, max_nodes)
+    def _get_text_features(self, data):
 
-	# 			feats:
-	# 				Padded feature matrix of size (max_nodes, m)
-	# 				(m: dimension of node text vector)
-	# 	'''
-	# 	G = nx.from_dict_of_lists(graph_dict)
-
-	# 	return G
-
-	def _get_text_features(self, data): 
-    
-		'''
-			Args:
-				str, input data
-				
-			Returns: 
-				np.array, shape=(22,);
-				an array of the text converted to features
-				
-		'''
-		
-		assert type(data) == str, f'Expected type {str}. Received {type(data)}.'
-		lenth = len(data)
-		n_upper = 0
-		n_lower = 0
-		n_alpha = 0
-		n_digits = 0
-		n_spaces = 0
-		n_numeric = 0
-		n_special = 0
-		number = 0
-		special_chars = {'&': 0, '@': 1, '#': 2, '(': 3, ')': 4, '-': 5, '+': 6, 
+        assert type(data) == str, f'Expected type {str}. Received {type(data)}.'
+        lenth = len(data)
+        n_upper = 0
+        n_lower = 0
+        n_alpha = 0
+        n_digits = 0
+        n_spaces = 0
+        n_numeric = 0
+        n_special = 0
+        number = 0
+        special_chars = {'&': 0, '@': 1, '#': 2, '(': 3, ')': 4, '-': 5, '+': 6,
 						'=': 7, '*': 8, '%': 9, '.':10, ',': 11, '\\': 12,'/': 13, 
 						'|': 14, ':': 15}
 		
-		special_chars_arr = np.zeros(shape=len(special_chars))    
+        special_chars_arr = np.zeros(shape=len(special_chars))
 		
 		# character wise
-		for char in data: 
+        for char in data:
 			
 			# for lower letters 
-			if char.islower(): 
-				n_lower += 1
+            if char.islower():
+                n_lower += 1
 	
-			# for upper letters 
-			if char.isupper(): 
-				n_upper += 1
+            # for upper letters
+            if char.isupper():
+                n_upper += 1
 			
-			# for white spaces
-			if char.isspace():
-				n_spaces += 1
+            # for white spaces
+            if char.isspace():
+                n_spaces += 1
 			
-			# for alphabetic chars
-			if char.isalpha():
-				n_alpha += 1
+            # for alphabetic chars
+            if char.isalpha():
+                n_alpha += 1
 			
-			# for numeric chars
-			if char.isnumeric():
-				n_numeric += 1
+            # for numeric chars
+            if char.isnumeric():
+                n_numeric += 1
 			
-			# array for special chars
-			if char in special_chars.keys():
-				char_idx = special_chars[char]
-				# put 1 at index
-				special_chars_arr[char_idx] += 1
+            # array for special chars
+            if char in special_chars.keys():
+                char_idx = special_chars[char]
+                # put 1 at index
+                special_chars_arr[char_idx] += 1
 				
 		# word wise # 统计字符串中数字的个数
 		# for word in data.split():
-		for word in re.split('[/-]',data):
+        for word in re.split('[/-]',data):
 
 			# if digit is integer 
-			try:
-				number = int(word) # word表示的不是整数数据字符串时候会报错
-				n_digits += 1
-			except:
-				pass
+            try:
+                number = int(word) # word表示的不是整数数据字符串时候会报错
+                n_digits += 1
+            except:
+                pass
 
-			# if digit is float
-			if n_digits == 0:
-				try:
-					number = float(word) # word表示的不是浮点数据字符串时候回报错
-					n_digits += 1
-				except:
-					pass
+            # if digit is float
+            if n_digits == 0:
+                try:
+                    number = float(word) # word表示的不是浮点数据字符串时候回报错
+                    n_digits += 1
+                except:
+                    pass
 		
-		features = []
-		features.append([n_lower/lenth, n_upper/lenth, n_spaces, n_alpha/lenth, n_numeric/lenth, n_digits])
-		features = np.array(features)
-		features = np.append(features, np.array(special_chars_arr))
-		vec_arr = code_sentence._generate_txt_vec(data)
-		features = np.append(features, vec_arr)
+        features = []
+        features.append([n_lower/lenth, n_upper/lenth, n_spaces, n_alpha/lenth, n_numeric/lenth, n_digits])
+        features = np.array(features)
+        features = np.append(features, np.array(special_chars_arr))
+        vec_arr = code_sentence._generate_txt_vec(data)
+        features = np.append(features, vec_arr)
 
-		return features
+        return features
 
-	def _get_text_labels(self, data):
-		label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
-						 'payment_terms','amount_currency', 'currency', 'amount', 'o']
-		if self.resize :
-			label_classes.append('virtual')
-		mlb = MultiLabelBinarizer(classes=label_classes)
-		la = mlb.fit_transform([[data]])
+    def _get_text_labels(self, data):
+        # label_classes = ['buyer_name', 'seller_name', 'document_date','invoice_no','contract_no',
+        # 				 'payment_terms','amount_currency', 'currency', 'amount', 'o']
+        # label_classes = ['COMPANY','ADDRESS','DATE','TOTAL','O']
+        label_classes = ['company','address','date','total','other']
+        if self.resize :
+            label_classes.append('virtual')
+        mlb = MultiLabelBinarizer(classes=label_classes)
+        la = mlb.fit_transform([[data]])
 
-		return la[0]
+        return la[0]
 
-	def _pad_adj(self, adj):
-		'''
-			This method resizes the input Adjacency matrix to shape 
-			(self.max_nodes, self.max_nodes)
+    def _pad_adj(self, adj):
+        '''
+            This method resizes the input Adjacency matrix to shape
+            (self.max_nodes, self.max_nodes)
 
-			adj: 
-				2d numpy array
-				adjacency matrix
-		'''
-		
-		assert adj.shape[0] == adj.shape[1], f'The input adjacency matrix is \
-			not square and has shape {adj.shape}'
-		
-		# get n of nxn matrix
-		n = adj.shape[0]
-		
-		if n < self.max_nodes:
-			target = np.zeros(shape=(self.max_nodes, self.max_nodes))
+            adj:
+                2d numpy array
+                adjacency matrix
+        '''
 
-			# fill in the target matrix with the adjacency
-			target[:adj.shape[0], :adj.shape[1]] = adj
-			
-		elif n > self.max_nodes:
-			# cut away the excess rows and columns of adj
-			target = adj[:self.max_nodes, :self.max_nodes]
-			
-		else:
-			# do nothing
-			target = adj
-			
-		return target
-	
-	def _pad_text_features(self, feat_arr):
-		'''
-			This method pads the feature matrix to size 
-			(self.max_nodes, feat_arr.shape[1])
-		'''
-		target = np.zeros(shape=(self.max_nodes, feat_arr.shape[1]))
+        assert adj.shape[0] == adj.shape[1], f'The input adjacency matrix is \
+            not square and has shape {adj.shape}'
 
-		if self.max_nodes > feat_arr.shape[0]:
-			target[:feat_arr.shape[0], :feat_arr.shape[1]] = feat_arr
+        # get n of nxn matrix
+        n = adj.shape[0]
 
-		elif self.max_nodes < feat_arr.shape[0]:
-			# target = feat_arr[:self.max_nodes, feat_arr.shape[1]] # error
-			target = feat_arr[:self.max_nodes, :feat_arr.shape[1]]
+        if n < self.max_nodes:
+            target = np.zeros(shape=(self.max_nodes, self.max_nodes))
 
-		else: 
-			target = feat_arr
+            # fill in the target matrix with the adjacency
+            target[:adj.shape[0], :adj.shape[1]] = adj
 
-		return target
+        elif n > self.max_nodes:
+            # cut away the excess rows and columns of adj
+            target = adj[:self.max_nodes, :self.max_nodes]
 
-	def _pad_text_labels(self, label_arr):
-		'''
-			This method pads the feature matrix to size
-			(self.max_nodes, label_arr.shape[1])
-		'''
-		target = np.zeros(shape=(self.max_nodes, label_arr.shape[1]))
+        else:
+            # do nothing
+            target = adj
 
-		if self.max_nodes > label_arr.shape[0]:
-			target[:label_arr.shape[0], :label_arr.shape[1]] = label_arr
-			target[label_arr.shape[0]:, -1] = 1 # 即one-hot label 最后一个标签位为1 代表是增加的虚拟节点
+        return target
 
-		elif self.max_nodes < label_arr.shape[0]:
-			target = label_arr[:self.max_nodes, :label_arr.shape[1]]
+    def _pad_text_features(self, feat_arr):
+        '''
+            This method pads the feature matrix to size
+            (self.max_nodes, feat_arr.shape[1])
+        '''
+        target = np.zeros(shape=(self.max_nodes, feat_arr.shape[1]))
 
-		else:
-			target = label_arr
+        if self.max_nodes > feat_arr.shape[0]:
+            target[:feat_arr.shape[0], :feat_arr.shape[1]] = feat_arr
 
-		return target
+        elif self.max_nodes < feat_arr.shape[0]:
+            # target = feat_arr[:self.max_nodes, feat_arr.shape[1]] # error
+            target = feat_arr[:self.max_nodes, :feat_arr.shape[1]]
 
+        else:
+            target = feat_arr
 
-	def make_graph_data(self, graph_dict, text_list, label_list):
-		'''
-			Function to make an adjacency matrix from a networkx graph object
-			as well as padded feature matrix
+        return target
 
-			Args:
-				G: networkx graph object
-				
-				text_list: list,
-							of text entities:
-							['Tax Invoice', '1/2/2019', ...]
+    def _pad_text_labels(self, label_arr):
+        '''
+            This method pads the feature matrix to size
+            (self.max_nodes, label_arr.shape[1])
+        '''
+        target = np.zeros(shape=(self.max_nodes, label_arr.shape[1]))
 
-			Returns:
-				A: Adjacency matrix as np.array
+        if self.max_nodes > label_arr.shape[0]:
+            target[:label_arr.shape[0], :label_arr.shape[1]] = label_arr
+            target[label_arr.shape[0]:, -1] = 1 # 即one-hot label 最后一个标签位为1 代表是增加的虚拟节点
 
-				X: Feature matrix as numpy array for input graph
-		'''
-		G = nx.from_dict_of_lists(graph_dict)
-		adj_sparse = nx.adjacency_matrix(G)
+        elif self.max_nodes < label_arr.shape[0]:
+            target = label_arr[:self.max_nodes, :label_arr.shape[1]]
 
-		# scipy.sparse.save_npz("./sparse_adj.npz", adj_sparse)
-		# tmp = scipy.sparse.load_npz("./sparse_adj.npz")
-		# print(tmp)
-		# print("**************",type(adj_sparse)) # <class 'scipy.sparse.csr.csr_matrix'>
+        else:
+            target = label_arr
 
-		# preprocess the sparse adjacency matrix returned by networkx function
-		adj_arr = np.array(adj_sparse.todense())
-		# print(len(adj_arr), adj_arr)
-		if self.resize:
-			adj_arr = self._pad_adj(adj_arr)
-			# print(adj_arr.dtype) # int32
+        return target
 
-		# preprocess the list of text entities
-		# 节点初始向量表示生成模块，每个节点维度要一致，即句子编码长度相同，
-		# 后期可以要改成句子的词典one-hot表达或者其他句子级别的词向量，统一长度，作为节点初始输入
-		feat_list = list(map(self._get_text_features, text_list))
-		feat_arr = np.array(feat_list)
-		# print(len(feat_arr),feat_arr)
-		if self.resize:
-			feat_arr = self._pad_text_features(feat_arr)
-			# print(feat_arr.dtype) # float64
+    def _map_sentence_to_list(self, sentence):
+        map_arrar = code_sentence._generate_sentence_input(sentence)
+        return map_arrar
 
-		# preprocess the list of text labels
-		la_list = list(map(self._get_text_labels, label_list))
-		la_arr = np.array(la_list)
-		# print(len(la_arr), la_arr)
-		if self.resize:
-			la_arr = self._pad_text_labels(la_arr)
-			# print(la_arr.dtype) #int32
+    def make_graph_data(self, graph_dict, text_list, label_list):
+        # '''
+        # 	Function to make an adjacency matrix from a networkx graph object
+        # 	as well as padded feature matrix
+        #
+        # 	Args:
+        # 		G: networkx graph object
+        #
+        # 		text_list: list,
+        # 					of text entities:
+        # 					['Tax Invoice', '1/2/2019', ...]
+        #
+        # 	Returns:
+        # 		A: Adjacency matrix as np.array
+        #
+        # 		X: Feature matrix as numpy array for input graph
+        # '''
+        G = nx.from_dict_of_lists(graph_dict)
+        adj_sparse = nx.adjacency_matrix(G)
+        # scipy.sparse.save_npz("./sparse_adj.npz", adj_sparse)
+        # tmp = scipy.sparse.load_npz("./sparse_adj.npz")
+        #  print(tmp)
+        #  print("**************",type(adj_sparse)) # <class 'scipy.sparse.csr.csr_matrix'>
+        #  preprocess the sparse adjacency matrix returned by networkx function
+        adj_arr = np.array(adj_sparse.todense())
+        # print(len(adj_arr), adj_arr)
+        if self.resize:
+            adj_arr = self._pad_adj(adj_arr)
+            # print(adj_arr.dtype) # int32
 
-		return adj_sparse, scipy.sparse.csr_matrix(feat_arr), la_arr
+        # preprocess the list of text entities
+        # 节点初始向量表示生成模块，每个节点维度要一致，即句子编码长度相同，
+        # 后期可以要改成句子的词典one-hot表达或者其他句子级别的词向量，统一长度，作为节点初始输入
+        # feat_list = list(map(self._get_text_features, text_list))
+        feat_list = list(map(self._map_sentence_to_list, text_list))
+        # for i in range(len(text_list)):
+        #     print(text_list[i])
+        #     print(code_sentence.seg_sentence(text_list[i])[0])
+        #     print(feat_list[i] , len(feat_list[i]))
+        # exit()
+        feat_arr = np.array(feat_list)
+        # print(feat_arr)
+
+        # print(len(feat_arr),feat_arr)
+        if self.resize:
+            feat_arr = self._pad_text_features(feat_arr)
+            # print(feat_arr.dtype) # float64
+        # preprocess the list of text labels
+        la_list = list(map(self._get_text_labels, label_list))
+        la_arr = np.array(la_list)
+        # print(len(la_arr), la_arr)
+        if self.resize:
+            la_arr = self._pad_text_labels(la_arr)
+            # print(la_arr.dtype) #int32
+
+        # return adj_sparse, scipy.sparse.csr_matrix(feat_arr), la_arr
+        return adj_sparse, feat_arr, la_arr
 
 
 if __name__ == "__main__":
 	print(os.getcwd())
-	csv_dir = "./data/csv_data"
-	img_dir = "./data/cvat_pngs"
-	matrix_dir = "./data/matrix_data"
+	error_list = []
+
+	csv_dir = "./data/sroie_604_csv"
+	# csv_dir = "./data/sroie_347_csv"
+	img_dir = "./data/sroie_train_images"
+	# img_dir = "./data/sroie_test_images"
+	matrix_dir = "./data/matrix_data_sroie_604_new_format"
+	# matrix_dir = "./data/matrix_data_sroie_347_new_format"
+
+	if not os.path.exists(matrix_dir):
+		os.makedirs(matrix_dir)
+
+	# Before read csv, we need to write a functio to drop nan line!
+	def drop_nan_row():
+		pass
+
 	for file in os.listdir(csv_dir):
 		csv_file = os.path.join(csv_dir, file)
-		img_file = os.path.join(img_dir, file[:-4]+".png")
+		img_file = os.path.join(img_dir, file[:-4]+".jpg")
 		file_prefix = os.path.basename(csv_file)[:-4]
 		df = pd.read_csv(csv_file)
 		img = cv2.imread(img_file, 0)
 		tree = ObjectTree()
 		tree.read(df, img, file_prefix)
-		graph_dict, text_list, label_list = tree.connect(plot=True, export_df=True)
+		graph_dict, text_list, label_list, lost_nodes = tree.connect(plot=True, export_df=False)
 
-		print(graph_dict)
-		print(text_list)
-		print(label_list)
-		print('\n--------------------------------------------------------------\n')
+		# print(graph_dict)
+		# print(text_list)
+		# print(label_list)
+		# print(lost_nodes)
 
+		# print('\n--------------------------------------------------------------\n')
+
+		# resize arg is used for pading adj-matrix and numbers of span to fixed same lenth.
 		graph = Graph(max_nodes=50, resize=False)
 		A, X, L = graph.make_graph_data(graph_dict, text_list, label_list)
+        # csr_matrix / ndarray / ndarray
 		scipy.sparse.save_npz(os.path.join(matrix_dir, file[:-4]+"_adj.npz"), A)
-		scipy.sparse.save_npz(os.path.join(matrix_dir, file[:-4]+"_feature.npz"), X)
+		np.save(os.path.join(matrix_dir, file[:-4]+"_feature.npy"), X)
 		np.save(os.path.join(matrix_dir, file[:-4]+"_label.npy"), L)
 
-		print(A.A.shape)
-		# print(A)
-		print(X.A.shape)
-		# print(X)
-		print(L.shape)
-		# print(L)
+		# print(A.A.shape, X.shape, L.shape)
+		if A.A.shape[0] != len(X):
+			error_list.append(file)
+
+	print(error_list)
+
+
