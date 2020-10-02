@@ -5,7 +5,7 @@ This repo use GCN to extract entities from semi-structured document.
 The main refrence : https://github.com/tkipf/gcn.     
 
 # Details
-For quickly verify GCN's powerful ability of adjoining neighbours, I use lstm to express a span sentence currently and gcn to predict span label for box level prediction on sroie infomation extract task3.       
+For quickly verify GCN's powerful ability of adjoining neighbours, I use lstm to express a span sentence currently and gcn to predict span label for box level prediction on SROIE infomation extract task3.       
 
 Indeed, we can change the structure to predict entity directly like the traditional NER task.        
 
@@ -23,7 +23,7 @@ The train data contains 626 scanned receipts with some labeling errors and the t
 
 It takes about 20 seconds for training a epoch on one GTX1080 GPU.     
 
-My box level prediction on sroie infomation extract task3 is as follows:    
+My box level prediction on SROIE infomation extract task3 is as follows:    
 
                            |  precision |  recall  | f1-score   
                ————————————|————————————|——————————|——————————
