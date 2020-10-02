@@ -160,21 +160,6 @@ from sklearn.metrics import classification_report
 print(classification_report(real_label, predict_label, target_names=label_cs))
 
 
-#               precision    recall  f1-score   support
-#
-#      COMPANY       0.91      0.88      0.89       392
-#      ADDRESS       0.91      0.96      0.93       926
-#         DATE       0.89      0.95      0.92       414
-#        TOTAL       0.78      0.73      0.76       347
-#            O       0.99      0.99      0.99     16626
-#
-#     accuracy                           0.98     18705
-#    macro avg       0.90      0.90      0.90     18705
-# weighted avg       0.98      0.98      0.98     18705
-
-# 0.8725 0.88 0.876
-
-
 # 测试集合约有28张效果表现不好：可能是训练集没有覆盖到
 # X51006556657.jpg ~~~~~ X51006557507.jpg
 
