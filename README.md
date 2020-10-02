@@ -16,7 +16,7 @@ Before training, we need to use grapher.py to trans a receipt into graph structu
 </div>   
 
 
-Unfortunately, my net structure only supports 1 batch training now and I will add real batch training when I have spare time. It needs to add virtual nodes(spans) on adjacent matrix and pad span input to fixed lenth, then the input can be (Batch, num_span, sentence_len) format.     
+Unfortunately, my net structure only supports 1 batch training now and I will add real batch training when I have spare time. It needs to add virtual nodes(spans) on adjacent matrix and pad span input to fixed lenth, then the input can be (batch, num_span, sentence_len) format.     
 
 # Result 
 The train data contains 626 scanned receipts with some labeling errors and the test data contains 347 scanned receipts. 
