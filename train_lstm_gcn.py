@@ -146,18 +146,12 @@ for file_name in test_list:
 
     predict_label.extend([i.item() for i in pred])
     real_label.extend([np.argmax(i) for i in test_labels])
-    print("*******", file_name,"*******")
-    for i,j in zip(p_label, r_label):
-        print (i, "----",j)
-        result_list.append(i)
-        result_list.append(j)
+    # print("*******", file_name,"*******")
+    # for i,j in zip(p_label, r_label):
+    #     print (i, "----",j)
+    #     result_list.append(i)
+    #     result_list.append(j)
 
 from sklearn.metrics import classification_report
 print(classification_report(real_label, predict_label, target_names=label_cs))
 
-
-# 测试集合约有28张效果表现不好：可能是训练集没有覆盖到
-# X51006556657.jpg ~~~~~ X51006557507.jpg
-
-# 有问题的图片需要找到
-# Corrupt JPEG data: bad Huffman code
